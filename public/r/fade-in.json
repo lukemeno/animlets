@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "fade-in",
+  "title": "Fade in",
+  "description": "A Motion wrapper that fades its children in and skips that animation when the user prefers reduced motion.",
+  "dependencies": [
+    "motion"
+  ],
+  "files": [
+    {
+      "path": "registry/animlets/fade-in.tsx",
+      "content": "\"use client\";\n\nimport { motion, useReducedMotion } from \"motion/react\";\nimport { useEffect, useState, type ReactNode } from \"react\";\n\ntype FadeInProps = {\n  children: ReactNode;\n  className?: string;\n};\n\nexport function FadeIn({ children, className }: FadeInProps) {\n  const reduce = useReducedMotion();\n  const [ready, setReady] = useState(false);\n\n  useEffect(() => {\n    setReady(true);\n  }, []);\n\n  // useReducedMotion is null on the server and a boolean on the first client\n  // render, because that render reads matchMedia. Branching before mount\n  // would ship different HTML than the server.\n  if (!ready || reduce !== false) {\n    return (\n      <div className={className} data-fade-in=\"\">\n        {children}\n      </div>\n    );\n  }\n\n  return (\n    <motion.div\n      className={className}\n      data-fade-in=\"\"\n      initial={{ opacity: 0, y: 8 }}\n      animate={{ opacity: 1, y: 0 }}\n      transition={{ duration: 0.6, ease: \"easeOut\" }}\n    >\n      {children}\n    </motion.div>\n  );\n}\n\nexport function Demo() {\n  return (\n    <FadeIn>\n      <p className=\"text-3xl font-semibold tracking-tight\">Fade in</p>\n    </FadeIn>\n  );\n}\n",
+      "type": "registry:ui",
+      "target": "@components/animlets/fade-in.tsx"
+    }
+  ],
+  "type": "registry:ui"
+}

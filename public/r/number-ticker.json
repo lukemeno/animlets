@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "number-ticker",
+  "title": "Number ticker",
+  "description": "A spring count for a KPI that keeps tabular figures, announces the final value once, and shows that value immediately when reduced motion is requested.",
+  "dependencies": [
+    "motion"
+  ],
+  "files": [
+    {
+      "path": "registry/animlets/number-ticker.tsx",
+      "content": "\"use client\";\n\nimport { animate, motion, useReducedMotion } from \"motion/react\";\nimport { useLayoutEffect, useState } from \"react\";\n\ntype NumberTickerProps = {\n  value: number;\n  from?: number;\n  prefix?: string;\n  suffix?: string;\n  className?: string;\n  format?: (value: number) => string;\n};\n\nfunction formatInteger(value: number) {\n  return new Intl.NumberFormat(\"en-US\", { maximumFractionDigits: 0 }).format(Math.round(value));\n}\n\nexport function NumberTicker({\n  value,\n  from = 0,\n  prefix = \"\",\n  suffix = \"\",\n  className,\n  format = formatInteger,\n}: NumberTickerProps) {\n  const reduce = useReducedMotion();\n  const [ready, setReady] = useState(false);\n  const [display, setDisplay] = useState(value);\n\n  // useReducedMotion is null on the server and a boolean on the first client\n  // render, because that render reads matchMedia. Branching before mount\n  // would ship different HTML than the server.\n  useLayoutEffect(() => {\n    setReady(true);\n  }, []);\n\n  useLayoutEffect(() => {\n    if (!ready) return;\n    if (reduce !== false) {\n      setDisplay(value);\n      return;\n    }\n    setDisplay(from);\n    const controls = animate(from, value, {\n      type: \"spring\",\n      bounce: 0,\n      duration: 0.9,\n      onUpdate: (latest) => setDisplay(latest),\n    });\n    return () => controls.stop();\n  }, [ready, reduce, from, value]);\n\n  const shown = `${prefix}${format(ready && reduce === false ? display : value)}${suffix}`;\n  const finalText = `${prefix}${format(value)}${suffix}`;\n  const motionOn = ready && reduce === false;\n  const figureClass = `tabular-nums ${className ?? \"text-4xl font-semibold tracking-tight text-foreground\"}`;\n\n  return (\n    <span className=\"inline-flex\">\n      {motionOn ? (\n        <motion.span\n          data-fade-in=\"\"\n          className={figureClass}\n          aria-hidden=\"true\"\n          initial={{ opacity: 0.15, y: 10 }}\n          animate={{ opacity: 1, y: 0 }}\n          transition={{ type: \"spring\", bounce: 0, duration: 0.55 }}\n        >\n          {shown}\n        </motion.span>\n      ) : (\n        <span data-fade-in=\"\" className={figureClass} aria-hidden=\"true\">\n          {finalText}\n        </span>\n      )}\n      <span className=\"sr-only\" aria-live=\"polite\">\n        {finalText}\n      </span>\n    </span>\n  );\n}\n\nexport function Demo() {\n  return (\n    <div className=\"w-64 rounded-xl border bg-card p-5 text-card-foreground shadow-sm\">\n      <p className=\"text-sm text-muted-foreground\">Revenue</p>\n      <NumberTicker value={12840} prefix=\"$\" />\n      <p className=\"mt-1 text-xs text-muted-foreground\">This month</p>\n    </div>\n  );\n}\n\nexport type { NumberTickerProps };\n",
+      "type": "registry:ui",
+      "target": "@components/animlets/number-ticker.tsx"
+    }
+  ],
+  "type": "registry:ui"
+}

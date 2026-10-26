@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "stagger-list",
+  "title": "Stagger list",
+  "description": "Staggers the entrance of cards or rows with opacity and transform so the list keeps its layout, and skips the stagger when reduced motion is requested.",
+  "dependencies": [
+    "motion"
+  ],
+  "files": [
+    {
+      "path": "registry/animlets/stagger-list.tsx",
+      "content": "\"use client\";\n\nimport { motion, useReducedMotion } from \"motion/react\";\nimport { Children, useLayoutEffect, useState, type ReactNode } from \"react\";\n\ntype StaggerListProps = {\n  as?: \"div\" | \"ul\";\n  children: ReactNode;\n  className?: string;\n};\n\nconst motionTag = {\n  div: motion.div,\n  li: motion.li,\n} as const;\n\nexport function StaggerList({ as = \"div\", children, className }: StaggerListProps) {\n  const reduce = useReducedMotion();\n  const [ready, setReady] = useState(false);\n  const itemTag = as === \"ul\" ? \"li\" : \"div\";\n\n  // useReducedMotion is null on the server and a boolean on the first client\n  // render, because that render reads matchMedia. Branching before mount\n  // would ship different HTML than the server.\n  useLayoutEffect(() => {\n    setReady(true);\n  }, []);\n\n  const motionOn = ready && reduce === false;\n  const items = Children.toArray(children);\n  const ListTag = as;\n\n  return (\n    <ListTag className={className ?? \"grid list-none gap-3 p-0\"}>\n      {items.map((child, index) => (\n        <StaggerRow key={index} tag={itemTag} index={index} motionOn={motionOn}>\n          {child}\n        </StaggerRow>\n      ))}\n    </ListTag>\n  );\n}\n\nfunction StaggerRow({\n  tag,\n  index,\n  motionOn,\n  children,\n}: {\n  tag: \"div\" | \"li\";\n  index: number;\n  motionOn: boolean;\n  children: ReactNode;\n}) {\n  const marked = index === 0 ? { \"data-fade-in\": \"\" } : {};\n  if (!motionOn) {\n    const Tag = tag;\n    return <Tag {...marked}>{children}</Tag>;\n  }\n  const MotionTag = motionTag[tag];\n  return (\n    <MotionTag\n      {...marked}\n      initial={{ opacity: 0, y: 12 }}\n      animate={{ opacity: 1, y: 0 }}\n      transition={{ duration: 0.45, ease: \"easeOut\", delay: index * 0.08 }}\n    >\n      {children}\n    </MotionTag>\n  );\n}\n\nconst ROWS = [\n  [\"Northwind\", \"$18,240\"],\n  [\"Acme\", \"$12,480\"],\n  [\"Globex\", \"$9,110\"],\n  [\"Initech\", \"$6,430\"],\n];\n\nexport function Demo() {\n  return (\n    <StaggerList className=\"w-80\" as=\"ul\">\n      {ROWS.map(([name, amount]) => (\n        <div\n          key={name}\n          className=\"flex items-center justify-between rounded-lg border bg-card px-4 py-3 text-card-foreground\"\n        >\n          <span className=\"text-sm font-medium\">{name}</span>\n          <span className=\"text-sm tabular-nums text-muted-foreground\">{amount}</span>\n        </div>\n      ))}\n    </StaggerList>\n  );\n}\n\nexport type { StaggerListProps };\n",
+      "type": "registry:ui",
+      "target": "@components/animlets/stagger-list.tsx"
+    }
+  ],
+  "type": "registry:ui"
+}
